@@ -1,0 +1,41 @@
+workflow:
+  name: OrderDelivery
+  initialState: INIT
+  defaultStateOnError: ERROR
+  expirableStates:
+    - DELIVERY_COMPLETED
+    - DELIVERY_TIMEOUT
+    - ORDER_PLACED_TIMEOUT
+    - ERROR
+  states:
+    - name: INIT
+      transitions:
+        - trigger: ORDER_PLACEMENT_REQUEST
+          action: placeOrder
+          state: ORDER_PLACED
+
+    - name: ORDER_PLACED
+      transitions:
+        - trigger: START_DELIVERY_REQUEST
+          action: startDelivery
+          conditions:
+            - checkAvailability
+          state: DELIVERY_STARTED
+
+        - trigger: START_DELIVERY_REQUEST
+          action: notifyOutForDelivery
+          state: OUT_FOR_DELIVERY
+
+        - trigger: TIMEOUT
+          action: orderPlacedTimeout
+          state: ORDER_PLACED_TIMEOUT
+
+    - name: DELIVERY_STARTED
+      transitions:
+        - trigger: DELIVERY_COMPLETED_EVENT
+          action: completeDelivery
+          state: DELIVERY_COMPLETED
+
+        - trigger: TIMEOUT
+          action: deliveryTimeout
+          state: DELIVERY_TIMEOUT
